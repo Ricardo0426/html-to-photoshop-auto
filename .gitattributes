@@ -1,0 +1,4 @@
+# cmd.exe 按行解析批处理，标签跳转依赖 CRLF 行尾；
+# 同时这些脚本是 GBK 编码（cmd 只能按 OEM 码页解析，UTF-8 会乱码），请勿改回 UTF-8。
+*.cmd text eol=crlf
+*.bat text eol=crlf

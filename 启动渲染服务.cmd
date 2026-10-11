@@ -1,25 +1,59 @@
 @echo off
-chcp 65001 >nul
+chcp 936 >nul
+setlocal EnableExtensions
+title HTML ×Ô¶¯·Ö×éµ¼Èë - ±¾µØäÖÈ¾·þÎñ
 cd /d "%~dp0"
+
+set "NODE="
 where node >nul 2>nul
-if errorlevel 1 (
-  echo æœªæ‰¾åˆ° Node.jsã€‚è¯·å…ˆå®‰è£… Node.js 20 æˆ–æ›´æ–°ç‰ˆæœ¬ã€‚
+if not errorlevel 1 set "NODE=node"
+if not defined NODE if exist "%ProgramFiles%\nodejs\node.exe" set "NODE=%ProgramFiles%\nodejs\node.exe"
+if not defined NODE if exist "%ProgramFiles(x86)%\nodejs\node.exe" set "NODE=%ProgramFiles(x86)%\nodejs\node.exe"
+if not defined NODE if exist "%LOCALAPPDATA%\Programs\nodejs\node.exe" set "NODE=%LOCALAPPDATA%\Programs\nodejs\node.exe"
+
+if not defined NODE (
+  echo.
+  echo   [´íÎó] Ã»ÓÐÕÒµ½ Node.js¡£
+  echo   ±¾²å¼þÐèÒª Node.js 20 »ò¸üÐÂ°æ±¾¡£
+  echo   Çëµ½ https://nodejs.org ÏÂÔØ°²×°£¬°²×°Ê±±£³ÖÄ¬ÈÏÑ¡Ïî£¬È»ºóÖØÐÂË«»÷±¾ÎÄ¼þ¡£
+  echo.
   pause
   exit /b 1
 )
-node -e "process.exit(Number(process.versions.node.split('.')[0]) >= 20 ? 0 : 1)"
+
+"%NODE%" -e "process.exit(Number(process.versions.node.split('.')[0]) >= 20 ? 0 : 1)"
 if errorlevel 1 (
-  echo å½“å‰ Node.js ç‰ˆæœ¬è¿‡æ—§ï¼Œè¯·å®‰è£… Node.js 20 æˆ–æ›´æ–°ç‰ˆæœ¬ã€‚
+  echo.
+  echo   [´íÎó] µ±Ç° Node.js °æ±¾¹ý¾É£¬ÇëÉý¼¶µ½ 20 »ò¸üÐÂ°æ±¾¡£
+  echo.
   pause
   exit /b 1
 )
+
 if not exist "node_modules\playwright\package.json" (
-  echo æ­£åœ¨å‡†å¤‡æœ¬åœ°æ¸²æŸ“ä¾èµ–ï¼Œé¦–æ¬¡å¯åŠ¨éœ€è¦è”ç½‘ä¸‹è½½ npm åŒ…ã€‚
+  echo.
+  echo   ÕýÔÚ×¼±¸±¾µØäÖÈ¾ÒÀÀµ£¬Ê×´ÎÆô¶¯ÐèÒªÁªÍøÏÂÔØ£¬ÇëÉÔºò¡­¡­
   call npm ci --omit=dev
   if errorlevel 1 (
+    echo.
+    echo   [´íÎó] ÒÀÀµ°²×°Ê§°Ü¡£Çë¼ì²éÍøÂçºóÖØÐÂË«»÷±¾ÎÄ¼þ¡£
+    echo.
     pause
     exit /b 1
   )
 )
-node src\server.mjs
+
+echo.
+echo   ============================================
+echo     HTML ×Ô¶¯·Ö×éµ¼Èë - ±¾µØäÖÈ¾·þÎñ
+echo   ============================================
+echo.
+echo   ±£³Ö±¾´°¿Ú¿ª×Å£¬¹Ø±Õ´°¿Ú¼´Í£Ö¹·þÎñ¡£
+echo   »Øµ½ Photoshop£¬ÔÚ¡°ÔöÐ§¹¤¾ß - HTML ×Ô¶¯·Ö×éµ¼Èë¡±Àïµã¡°ÖØÐÂÁ¬½Ó¡±¡£
+echo.
+
+"%NODE%" src\server.mjs
+
+echo.
+echo   ·þÎñÒÑÍ£Ö¹£¬¿ÉÒÔ¹Ø±Õ±¾´°¿Ú¡£
 pause

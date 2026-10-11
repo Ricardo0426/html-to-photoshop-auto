@@ -24,7 +24,11 @@ class HelperClient {
     if (path !== "/health") headers["X-HTML-Import-Token"] = this.token;
     let response;
     try { response = await this.fetch(this.baseUrl + path, { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }); }
-    catch (_) { throw new Error("无法连接渲染服务。请先运行“启动渲染服务.cmd”，然后点击“重新连接”。"); }
+    catch (error) {
+      const detail = error ? ((error.name ? error.name + ": " : "") + (error.message || String(error))) : "未知错误";
+      console.log("[HTML自动分组导入] 请求渲染服务失败 " + this.baseUrl + path + " —— " + detail);
+      throw new Error("无法连接渲染服务（" + detail + "）。请先运行“启动渲染服务.cmd”，然后点击“重新连接”。");
+    }
     let data;
     try { data = await response.json(); } catch (_) { throw new Error("渲染服务返回了无效结果，请重新启动渲染服务。"); }
     if (!response.ok) throw new Error(data.error && (data.error.message || data.error) || data.message || "渲染服务请求失败。");
@@ -35,6 +39,7 @@ class HelperClient {
     if (!data.ready || typeof data.sessionToken !== "string" || !data.sessionToken) throw new Error("渲染服务尚未准备好，请查看服务窗口后重新连接。");
     this.token = data.sessionToken;
     this.version = data.version;
+    console.log("[HTML自动分组导入] 已连接渲染服务 v" + data.version);
     return data;
   }
 }
@@ -228,5 +233,11 @@ if (typeof module !== "undefined") module.exports = { HELPER_URL, HelperClient, 
 if (typeof document !== "undefined") {
   const uxp = require("uxp");
   const photoshop = require("photoshop");
-  mountPanel(document, new ImportController({ client: new HelperClient((...args) => fetch(...args)), fs: uxp.storage.localFileSystem, photoshop }));
+  console.log("[HTML自动分组导入] 面板已加载，渲染服务地址 " + HELPER_URL);
+  try {
+    mountPanel(document, new ImportController({ client: new HelperClient((...args) => fetch(...args)), fs: uxp.storage.localFileSystem, photoshop }));
+  } catch (error) {
+    console.log("[HTML自动分组导入] 面板初始化失败 —— " + (error && error.message ? error.message : String(error)));
+    throw error;
+  }
 }

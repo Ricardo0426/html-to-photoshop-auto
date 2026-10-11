@@ -11,7 +11,11 @@ const TOKEN_HEADER='x-html-import-token';
 const MAX_BODY=3*1024*1024;
 const safeNumber=(v,fallback,min=64,max=30000)=>Math.max(min,Math.min(max,Number(v)||fallback));
 function originAllowed(origin,port) {
-  return !origin || origin==='null' || origin===`http://127.0.0.1:${port}` || origin===`http://localhost:${port}` || /^uxp:\/\//.test(origin);
+  if(!origin||origin==='null')return true;
+  if(origin===`http://127.0.0.1:${port}`||origin===`http://localhost:${port}`)return true;
+  // UXP 面板的页面来源是 plugin://（旧版为 uxp://），二者都不是网页来源；
+  // 普通网页（http/https）一律拒绝，避免任意站点访问本地服务。
+  try{const scheme=new URL(origin).protocol;return scheme!=='http:'&&scheme!=='https:';}catch{return false;}
 }
 async function readJson(req) {
   let size=0,body='';
@@ -72,11 +76,11 @@ export async function createService({port=DEFAULT_PORT,rendererFactory=createRen
   const server=http.createServer(async(req,res)=>{
     const send=(status,body)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(body));};
     const origin=req.headers.origin;
-    if(!originAllowed(origin,port)){send(403,{error:'仅允许本地插件连接'});return;}
     if(origin)res.setHeader('Access-Control-Allow-Origin',origin);
     res.setHeader('Vary','Origin');
     res.setHeader('Access-Control-Allow-Headers',`Content-Type, ${TOKEN_HEADER}`);
     res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');
+    if(!originAllowed(origin,port)){console.log('已拒绝来源：'+(origin||'(空)'));send(403,{error:'仅允许本地插件连接'});return;}
     if(req.method==='OPTIONS'){res.writeHead(204);res.end();return;}
     const url=new URL(req.url,'http://127.0.0.1');
     if(req.method==='GET'&&url.pathname==='/health'){send(200,{version:VERSION,ready:true,sessionToken:token});return;}

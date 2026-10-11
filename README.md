@@ -10,15 +10,36 @@
 
 ## 安装
 
-从 GitHub Releases 下载完整安装包并解压到固定目录。安装包包含 UXP 面板、本地渲染服务及 npm 依赖，不含源 HTML、用户素材或示例 PSD。
+完整包包含 UXP 面板和本地渲染服务，两部分都要保留。
 
-1. 安装 Node.js 20 或更新版本，以及 Chrome 或 Edge。
-2. 使用 Adobe 官方的 **UXP Developer Tool**，点击 Add Plugin，选择 `plugin/manifest.json`，再点击 Load。开发模式可能需要在 Photoshop 设置中开启。
-3. 也可尝试双击 `HTML自动分层导入-v0.1.0.ccx`，由 Adobe 安装器安装；本地开发 CCX 是否受支持取决于安装器版本，尚未完成原生安装验证。
-4. 双击 **启动渲染服务.cmd**，保持服务窗口运行。
-5. 在 Photoshop 的“插件”菜单中打开 **HTML 自动分组导入**，确认显示“渲染服务已连接”。
+### 第一步：安装面板
 
-本地服务默认监听 `127.0.0.1:38417`。没有 Chrome/Edge 时，可以在解压目录运行 `npx playwright install chromium`。如果 npm 依赖目录丢失，启动脚本会尝试执行 `npm ci --omit=dev`。
+和普通 Photoshop 插件一样，不需要管理员权限，也不需要 UXP Developer Tool：
+
+1. 把完整包解压到固定目录。
+2. 双击 **安装插件.cmd**。脚本会把 `plugin` 复制到当前用户的 UXP 插件目录：
+
+   ```
+   %APPDATA%\Adobe\UXP\Plugins\External\HTML自动分组导入_v0.1.0
+   ```
+
+3. **完全退出 Photoshop**（不是最小化），再重新打开。
+4. 顶部菜单 → **增效工具** → **HTML 自动分组导入**。
+
+卸载双击 **卸载插件.cmd**。安装目录按 Windows 用户隔离，只对当前用户生效，也不影响 Photoshop 的其他版本。
+
+> 该目录来自 UXP 日志中列出的 `upic::Loading plugins from user fallback plugins folder`。
+> `HTML自动分层导入-v0.1.0.ccx` 是给 Adobe 安装器 / 上架流程用的打包产物，本地分发不需要它。
+
+### 第二步：启动本地渲染服务
+
+5. 安装 Node.js 20 或更新版本；本机已有 Chrome 或 Edge 即可。
+6. 双击 **启动渲染服务.cmd**，保持服务窗口运行。
+7. 面板顶部显示“渲染服务已连接 · 0.1.0”即成功。若显示未连接，先确认服务窗口还在，再点面板上的“重新连接”。
+
+面板本身只是界面，网页排版和 PSD 生成都在本地渲染服务里完成，所以这个窗口必须一直开着。
+
+本地服务默认监听 `127.0.0.1:38417`，只接受本机 UXP 插件的请求。没有 Chrome/Edge 时，可以在解压目录运行 `npx playwright install chromium`；如果 npm 依赖目录丢失，启动脚本会尝试执行 `npm ci --omit=dev`。
 
 ## 使用
 
