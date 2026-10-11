@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {zipSync,strToU8} from 'fflate';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+process.chdir(root);fs.mkdirSync('dist',{recursive:true});
+const manifest=JSON.parse(fs.readFileSync('plugin/manifest.json','utf8'));
+if(!manifest.id||manifest.manifestVersion!==5)throw Error('UXP manifest invalid');
+const entries={};
+for(const name of fs.readdirSync('plugin'))if(fs.statSync('plugin/'+name).isFile())entries[name]=new Uint8Array(fs.readFileSync('plugin/'+name));
+entries['LICENSE']=new Uint8Array(fs.readFileSync('LICENSE'));
+entries['THIRD_PARTY_NOTICES.md']=new Uint8Array(fs.readFileSync('THIRD_PARTY_NOTICES.md'));
+entries['安装说明.md']=strToU8(fs.readFileSync('README.md','utf8'));
+fs.writeFileSync('dist/HTML自动分层导入-v0.1.0.ccx',zipSync(entries));
+console.log('Built UXP installer: dist/HTML自动分层导入-v0.1.0.ccx');
