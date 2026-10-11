@@ -1,6 +1,6 @@
 # HTML → Photoshop 自动分组导入
 
-面向 **Photoshop 2025（26.x）** 的 UXP 插件。选择本地 HTML 项目文件夹，手动勾选首页或二级页面，自动识别尺寸，批量生成分层 PSD 并在 Photoshop 中打开。
+面向 **Photoshop 2022（23.3）及以上** 的 UXP 插件。选择本地 HTML 项目文件夹，手动勾选首页或二级页面，自动识别尺寸，批量生成分层 PSD 并在 Photoshop 中打开。
 
 ![插件界面预览](docs/ui-preview.png)
 
@@ -70,6 +70,8 @@
 ## 验证状态
 
 开发阶段在 Photoshop 2025 中实际打开了 4 份生成的 PSD，并逐个修改了 40 个文字图层，均通过可编辑性检查。相关用户素材、PSD、截图和本机验证报告均未公开。
+
+面板清单声明的最低版本是 Photoshop 2022 的 23.3（`manifestVersion: 5` 与 `apiVersion: 2` 的下限）。23.3～25.x 上的实际表现尚未验证：`photoshop.app.fonts` 取不到时插件会自动跳过字体匹配，不影响其他功能；`app.open` 打开 PSD 的流程在旧版行为未知。
 
 这项验证覆盖转换出的 PSD 文件。UXP 面板安装、加载和完整原生交互流程仍待验证；面板接口已通过模拟 UXP/Photoshop 和浏览器检查。
 

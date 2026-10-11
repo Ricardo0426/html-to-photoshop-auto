@@ -9,6 +9,7 @@
 - 修复 `启动渲染服务.cmd` 在中文 Windows 下满屏“不是内部或外部命令”：批处理改为 GBK 编码 + CRLF 行尾（cmd.exe 按 OEM 码页解析文件，`chcp` 改不了），并增加 Node.js 路径兜底探测。
 - 面板安装改为普通插件方式：新增 `安装插件.cmd` / `卸载插件.cmd`，复制到用户级 UXP 插件目录，不需要管理员权限，也不需要 UXP Developer Tool 和开发者模式。
 - `plugin/main.js` 增加连接诊断日志，失败时输出请求地址和具体原因。
+- 支持范围从 Photoshop 2025（26.0）放宽到 **Photoshop 2022（23.3）及以上**：`host.minVersion` 由 `26.0.0` 改为 `23.3.0`。23.3 是 `manifestVersion: 5` 与 `apiVersion: 2` 的下限，更旧的版本不识别 v5 权限模型，装上也拿不到网络权限。23.3～25.x 尚未在真机验证。
 
 ## 0.1.0
 

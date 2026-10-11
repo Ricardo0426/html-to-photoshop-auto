@@ -4,7 +4,7 @@
   "name": "HTML 自动分组导入",
   "version": "0.1.0",
   "main": "index.html",
-  "host": { "app": "PS", "minVersion": "26.0.0", "data": { "apiVersion": 2, "loadEvent": "use" } },
+  "host": { "app": "PS", "minVersion": "23.3.0", "data": { "apiVersion": 2, "loadEvent": "use" } },
   "entrypoints": [
     {
       "type": "panel",

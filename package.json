@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Local HTML project to layered Photoshop PSD, with a Photoshop 2025 UXP panel",
+  "description": "Local HTML project to layered Photoshop PSD, with a Photoshop 2022 (23.3)+ UXP panel",
   "license": "MIT",
   "engines": {"node": ">=20"},
   "scripts": {
