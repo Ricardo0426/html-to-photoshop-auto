@@ -1,3 +1,3 @@
-# Shared modules
+# Shared browser capture modules
 
-Resource resolution, automatic dimensions and DOM capture.
+These modules resolve local HTML resources, infer dimensions, and capture browser layout. The original capture code is covered by the MIT license in the repository root.
