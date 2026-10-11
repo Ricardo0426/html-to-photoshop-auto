@@ -4,7 +4,7 @@
 
 面向 **Photoshop 2022（23.3）及以上** 的 UXP 插件。选择本地 HTML 项目文件夹，手动勾选首页或二级页面，自动识别尺寸，批量生成分层 PSD 并在 Photoshop 中打开。
 
-![插件界面预览](docs/ui-preview.png)
+<img src="docs/ui-preview.png" alt="插件界面预览" width="400">
 
 界面预览（通用示例；浏览器中模拟 UXP 与渲染服务状态，用于展示面板交互，不代表原生安装验证，不含用户测试文件）。
 
