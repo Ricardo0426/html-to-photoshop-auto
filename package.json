@@ -1,0 +1,19 @@
+{
+  "name": "html-to-photoshop-auto",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local HTML project to layered Photoshop PSD, with a Photoshop 2025 UXP panel",
+  "license": "MIT",
+  "engines": {"node": ">=20"},
+  "scripts": {
+    "start": "node src/server.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "ag-psd": "^31.0.3",
+    "fflate": "^0.8.3",
+    "playwright": "^1.64.0",
+    "pngjs": "^7.0.0"
+  }
+}
