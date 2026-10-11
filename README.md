@@ -1,5 +1,7 @@
 # HTML → Photoshop 自动分组导入
 
+适合用于 AI 生成的 HTML 文件导入 PS 进行编辑。
+
 面向 **Photoshop 2022（23.3）及以上** 的 UXP 插件。选择本地 HTML 项目文件夹，手动勾选首页或二级页面，自动识别尺寸，批量生成分层 PSD 并在 Photoshop 中打开。
 
 ![插件界面预览](docs/ui-preview.png)
