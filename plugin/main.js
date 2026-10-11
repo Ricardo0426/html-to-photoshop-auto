@@ -3,6 +3,14 @@ const HELPER_URL = "http://127.0.0.1:38417";
 const TERMINAL = new Set(["completed", "done", "partial", "failed", "error", "cancelled", "canceled"]);
 
 function errorText(error) { return error && error.message ? error.message : String(error); }
+function parentPathOf(filePath) {
+  const value = String(filePath || "");
+  const index = Math.max(value.lastIndexOf("\\"), value.lastIndexOf("/"));
+  if (index <= 0) return value;
+  const parent = value.slice(0, index);
+  return /^[A-Za-z]:$/.test(parent) ? parent + "\\" : parent;
+}
+function isHtmlPath(filePath) { return /\.html?$/i.test(String(filePath || "")); }
 function relativeOutputPath(filePath, folderPath) {
   if (typeof filePath !== "string" || typeof folderPath !== "string" || /\0/.test(filePath)) throw new Error("结果中的 PSD 路径无效。");
   const clean = path => path.replace(/\\/g, "/").replace(/\/+$/, "");
@@ -47,7 +55,7 @@ class HelperClient {
 class ImportController {
   constructor({ client, fs, photoshop, onChange = () => {}, delay = ms => new Promise(resolve => setTimeout(resolve, ms)) }) {
     this.client = client; this.fs = fs; this.photoshop = photoshop; this.onChange = onChange; this.delay = delay;
-    this.rootFolder = null; this.outputFolder = null; this.jobId = null; this.busy = false;
+    this.rootFolder = null; this.outputFolder = null; this.jobId = null; this.busy = false; this.pendingSelection = null;
     this.state = { ready: false, service: "正在连接渲染服务…", rootPath: "", outputPath: "", pages: [], results: [], progress: 0, total: 0, status: "选择源文件夹和保存位置后开始。", busy: false, error: false };
   }
   update(patch = {}) { Object.assign(this.state, patch, { busy: this.busy }); this.onChange(this.state); }
@@ -60,7 +68,32 @@ class ImportController {
     const folder = await this.fs.getFolder();
     if (!folder) return;
     this.rootFolder = folder;
+    this.pendingSelection = null;
     this.update({ rootPath: folder.nativePath, pages: [], results: [], progress: 0, status: "正在扫描 HTML 文件…", error: false });
+    await this.scan();
+  }
+  async chooseSourceFile() {
+    if (this.busy) return;
+    if (!this.fs || typeof this.fs.getFileForOpening !== "function") {
+      this.update({ status: "当前 Photoshop 版本不支持文件选择器，请改用“选择文件夹”。", error: true });
+      return;
+    }
+    const file = await this.fs.getFileForOpening();
+    if (!file || Array.isArray(file)) return;
+    const nativePath = file.nativePath;
+    if (!isHtmlPath(nativePath)) {
+      this.update({ status: "请选择 .html 或 .htm 文件，或者改用“选择文件夹”。", error: true });
+      return;
+    }
+    const rootPath = parentPathOf(nativePath);
+    if (!rootPath || rootPath === nativePath) {
+      this.update({ status: "无法确定该文件所在的文件夹，请改用“选择文件夹”。", error: true });
+      return;
+    }
+    // 资源解析依赖整个目录树，所以仍然以文件所在的文件夹作为根目录，只预先勾选这一个文件。
+    this.rootFolder = { nativePath: rootPath };
+    this.pendingSelection = nativePath.slice(rootPath.length).replace(/^[\\/]+/, "").replace(/\\/g, "/");
+    this.update({ rootPath, pages: [], results: [], progress: 0, status: "正在扫描 HTML 文件…", error: false });
     await this.scan();
   }
   async chooseOutput() {
@@ -77,9 +110,17 @@ class ImportController {
       const data = await this.client.request("/scan", "POST", { rootPath: this.rootFolder.nativePath });
       if (!Array.isArray(data.pages)) throw new Error("扫描结果无效，请重新启动渲染服务。");
       const previous = new Map(this.state.pages.map(page => [page.path, page.selected]));
-      const pages = data.pages.filter(page => page && typeof page.path === "string").map(page => ({ ...page, selected: previous.has(page.path) ? previous.get(page.path) : true }));
+      let pages = data.pages.filter(page => page && typeof page.path === "string").map(page => ({ ...page, selected: previous.has(page.path) ? previous.get(page.path) : true }));
+      const only = this.pendingSelection;
+      this.pendingSelection = null;
+      let fileNote = "";
+      if (only) {
+        const target = pages.find(page => page.path.replace(/\\/g, "/").toLowerCase() === only.toLowerCase());
+        if (target) { pages = pages.map(page => ({ ...page, selected: page === target })); fileNote = " 已自动选中 " + target.path + "。"; }
+        else fileNote = " 没有在扫描结果里找到所选文件，请手动勾选。";
+      }
       const warnings = Array.isArray(data.warnings) && data.warnings.length ? " 扫描提示：" + data.warnings.map(warningText).join("；") : "";
-      this.update({ ready: true, service: "渲染服务已连接 · " + (this.client.version || "0.1.0"), pages, status: (pages.length ? "找到 " + pages.length + " 个 HTML，可手动勾选首页和二级页面。" : "文件夹中没有找到 HTML 文件。") + warnings, error: false });
+      this.update({ ready: true, service: "渲染服务已连接 · " + (this.client.version || "0.1.0"), pages, status: (pages.length ? "找到 " + pages.length + " 个 HTML，可手动勾选首页和二级页面。" : "文件夹中没有找到 HTML 文件。") + fileNote + warnings, error: false });
     } catch (error) { this.update({ status: errorText(error), error: true }); }
     finally { this.busy = false; this.update(); }
   }
@@ -178,14 +219,14 @@ function mountPanel(document, controller) {
     get("status").textContent = state.status;
     get("status").className = "status" + (state.error ? " error" : "");
     get("progress-fill").style.width = (state.total ? Math.min(100, Math.max(0, state.progress / state.total * 100)) : 0) + "%";
-    ["source-button", "output-button", "connect-button", "scan-button", "select-all", "select-none", "default-width", "default-height", "auto-open", "run-scripts"].forEach(id => { get(id).disabled = state.busy; });
+    ["source-button", "source-file-button", "output-button", "connect-button", "scan-button", "select-all", "select-none", "default-width", "default-height", "auto-open", "run-scripts"].forEach(id => { get(id).disabled = state.busy; });
     get("scan-button").disabled = state.busy || !state.rootPath;
     get("import-button").disabled = state.busy || !state.rootPath || !state.outputPath || !state.pages.some(page => page.selected);
     get("cancel-button").disabled = !state.busy || !controller.jobId;
     const nextPageSignature = JSON.stringify([state.pages, state.busy]);
     if (nextPageSignature !== pageSignature) {
       pageSignature = nextPageSignature; clear(get("page-list"));
-      if (!state.pages.length) get("page-list").appendChild(text("p", "选择包含 HTML 的文件夹后显示页面清单", "empty"));
+      if (!state.pages.length) get("page-list").appendChild(text("p", "选择文件夹或 HTML 文件后显示页面清单", "empty"));
       state.pages.forEach(page => {
         const row = document.createElement("label"); row.className = "page-row";
         const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.checked = page.selected; checkbox.disabled = state.busy;
@@ -217,6 +258,7 @@ function mountPanel(document, controller) {
   async function safely(action) { try { await action(); } catch (error) { controller.update({ status: errorText(error), error: true }); } }
   get("connect-button").addEventListener("click", () => safely(() => controller.connect()));
   get("source-button").addEventListener("click", () => safely(() => controller.chooseSource()));
+  get("source-file-button").addEventListener("click", () => safely(() => controller.chooseSourceFile()));
   get("output-button").addEventListener("click", () => safely(() => controller.chooseOutput()));
   get("scan-button").addEventListener("click", () => safely(() => controller.scan()));
   get("select-all").addEventListener("click", () => controller.selectAll(true));
@@ -229,7 +271,7 @@ function mountPanel(document, controller) {
   return controller;
 }
 
-if (typeof module !== "undefined") module.exports = { HELPER_URL, HelperClient, ImportController, relativeOutputPath, mountPanel, warningText };
+if (typeof module !== "undefined") module.exports = { HELPER_URL, HelperClient, ImportController, parentPathOf, isHtmlPath, relativeOutputPath, mountPanel, warningText };
 if (typeof document !== "undefined") {
   const uxp = require("uxp");
   const photoshop = require("photoshop");
