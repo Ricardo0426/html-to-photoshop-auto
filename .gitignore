@@ -36,3 +36,7 @@ tmp/
 测试/
 .DS_Store
 Thumbs.db
+
+# Public preview created with generic demo content
+!docs/
+!docs/ui-preview.png
