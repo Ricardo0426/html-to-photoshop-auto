@@ -19,7 +19,7 @@
 
 **方式一：下载完整包（推荐）**
 
-到 [Releases](https://github.com/ricardo0426/html-to-photoshop-auto/releases) 下载最新的 `HTML自动分层导入-v0.1.0-完整包.zip`，解压到固定目录。完整包**已内置 npm 依赖**，不需要联网安装，直接按下面两步操作即可。
+到 [Releases](https://github.com/ricardo0426/html-to-photoshop-auto/releases) 下载最新的 `html-to-photoshop-v0.1.0-full.zip`，解压到固定目录。完整包**已内置 npm 依赖**，不需要联网安装，直接按下面两步操作即可。
 
 **方式二：从源码安装**
 
